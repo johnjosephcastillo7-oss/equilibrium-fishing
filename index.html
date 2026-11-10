@@ -1,1 +1,187 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equilibrium Fishing</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#102d46;color:white;text-align:center}
+button{border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:bold;cursor:pointer;background:#ffca58;color:#17324b;margin:5px}
+button:disabled{opacity:.5}
+header{padding:15px;background:#12334c;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#scene{min-height:290px;padding:25px 12px;background:linear-gradient(#78c9ed 0%,#b9e8d1 55%,#2188a4 56%,#075477 100%);position:relative;overflow:hidden}
+.sun{font-size:45px}
+.cloud{font-size:35px}
+.fisher{font-size:76px;margin:8px}
+.water{font-size:38px;letter-spacing:12px}
+.panel{background:#f5f2e8;color:#18334b;margin:14px auto;padding:18px;border-radius:16px;width:92%;max-width:550px}
+.hidden{display:none!important}
+h1{color:#ffcf61;font-size:32px;text-shadow:2px 3px #18334b}
+h2{margin-top:5px}
+#question{font-size:19px;font-weight:bold}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+.answers button{background:#dceef3;color:#17324b;border:2px solid #8bbac7;min-height:55px}
+.answers button:hover{background:#b9e3ed}
+#timer{font-size:27px;font-weight:bold;color:#16834c}
+#timerbar{height:13px;background:#ddd;border-radius:20px;overflow:hidden;margin:8px}
+#bar{height:100%;width:100%;background:#21a66a;transition:width 1s linear}
+small{color:#557080}
+footer{padding:20px;color:#c7dce6;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <span>🎣 EQUILIBRIUM FISHING</span>
+  <span>🪙 <b id="coins">0</b> | ⭐ <b id="score">0</b></span>
+</header>
+
+<section id="scene">
+  <div class="sun">☀️</div>
+  <div class="cloud">☁️ 🐦 ☁️</div>
+  <div class="fisher">🧑‍🎣</div>
+  <div class="water">〰️ 🐟 〰️</div>
+  <h2 id="sceneText">Welcome to the lake!</h2>
+</section>
+
+<section id="menu" class="panel">
+  <h1>🎣 Equilibrium Fishing</h1>
+  <p>Catch fish by answering chemistry questions!</p>
+  <p>🧪 Concentrations • Kinetics • Acids & Bases • Equilibrium</p>
+  <button onclick="startGame()">PLAY</button>
+  <button onclick="showCollection()">🐠 Fish Collection</button>
+  <button onclick="showReviewer()">📖 Chemistry Reviewer</button>
+  <p><small>Developed by: John Joseph D. Castillo</small></p>
+</section>
+
+<section id="game" class="panel hidden">
+  <h2>🎣 Fishing Challenge</h2>
+  <p id="fishName">A fish is approaching!</p>
+  <div id="timer">60 seconds</div>
+  <div id="timerbar"><div id="bar"></div></div>
+  <p id="topic"></p>
+  <p id="question"></p>
+  <div id="answers" class="answers"></div>
+  <p id="feedback"></p>
+  <button id="cast" onclick="castFish()">CAST AGAIN 🎣</button>
+  <button onclick="showMenu()">MAIN MENU</button>
+</section>
+
+<section id="collection" class="panel hidden">
+  <h2>🐠 Fish Collection</h2>
+  <p id="fishList"></p>
+  <button onclick="showMenu()">BACK</button>
+</section>
+
+<section id="reviewer" class="panel hidden">
+  <h2>📖 Chemistry Reviewer</h2>
+  <div style="text-align:left">
+    <p><b>Concentration</b><br>Molarity: M = moles / liters of solution<br>Molality: m = moles / kg solvent<br>% mass = mass solute / mass solution × 100<br>% volume = volume solute / volume solution × 100<br>ppm = mass solute / mass solution × 1,000,000</p>
+    <p><b>Chemical Kinetics</b><br>Rate = change in concentration / time<br>Rate law: Rate = k[A]ᵐ[B]ⁿ</p>
+    <p><b>Acids and Bases</b><br>pH = −log[H⁺]<br>pOH = −log[OH⁻]<br>pH + pOH = 14 at 25°C</p>
+    <p><b>Chemical Equilibrium</b><br>Kc = products / reactants, each raised to its coefficient<br>Kp = Kc(RT)ⁿ<br>Q is calculated like Kc but uses current concentrations.</p>
+  </div>
+  <button onclick="showMenu()">BACK</button>
+</section>
+
+<footer>Learn chemistry. Catch fish. Become a master angler!</footer>
+
+<script>
+const questions = [
+{t:"Concentration",q:"What is the molarity of 2 moles of solute in 1 liter of solution?",a:["0.5 M","1 M","2 M","3 M"],c:2,e:"M = moles ÷ liters = 2 ÷ 1 = 2 M."},
+{t:"Concentration",q:"A solution contains 10 g solute and 90 g solvent. What is its mass percent?",a:["5%","10%","20%","90%"],c:1,e:"Mass percent = 10 ÷ (10 + 90) × 100 = 10%."},
+{t:"Concentration",q:"What is the molality of 1 mole solute in 2 kg solvent?",a:["0.5 m","1 m","2 m","3 m"],c:0,e:"Molality = 1 mole ÷ 2 kg = 0.5 m."},
+{t:"Concentration",q:"A mixture has 20 mL alcohol in 100 mL solution. What is the volume percent?",a:["10%","15%","20%","25%"],c:2,e:"Volume percent = 20 ÷ 100 × 100 = 20%."},
+{t:"Kinetics",q:"What does the rate constant k represent in a rate law?",a:["Reaction speed factor","Temperature only","Volume","Mass"],c:0,e:"The rate constant is the proportionality constant in a rate law at a given temperature."},
+{t:"Kinetics",q:"If Rate = k[A]², what is the order with respect to A?",a:["Zero","First","Second","Third"],c:2,e:"The exponent of A is 2, so it is second order with respect to A."},
+{t:"Kinetics",q:"If concentration changes by 6 mol/L in 3 seconds, what is the average rate of change?",a:["1 mol/L·s","2 mol/L·s","3 mol/L·s","18 mol/L·s"],c:1,e:"Rate of change = 6 ÷ 3 = 2 mol/L·s."},
+{t:"Acids & Bases",q:"What is the pH when [H⁺] = 1 × 10⁻³ M?",a:["1","2","3","11"],c:2,e:"pH = −log(10⁻³) = 3."},
+{t:"Acids & Bases",q:"At 25°C, if pH = 5, what is pOH?",a:["5","7","9","14"],c:2,e:"pH + pOH = 14, so pOH = 14 − 5 = 9."},
+{t:"Acids & Bases",q:"Which ion makes a solution acidic?",a:["OH⁻","H⁺","Na⁺","Cl⁻"],c:1,e:"An acidic solution has a greater hydrogen ion concentration."},
+{t:"Equilibrium",q:"For N₂ + 3H₂ ⇌ 2NH₃, what is the Kc expression?",a:["[NH₃]/[N₂][H₂]","[NH₃]²/[N₂][H₂]³","[N₂][H₂]³/[NH₃]²","[NH₃]²/[N₂]"],c:1,e:"Products go on top and reactants on the bottom. Coefficients become exponents."},
+{t:"Equilibrium",q:"What does Q < K mean?",a:["Reaction shifts forward","Reaction shifts backward","Already at equilibrium","Reaction stops"],c:0,e:"Q < K means there are too few products compared with equilibrium, so the reaction shifts forward."},
+{t:"Equilibrium",q:"Which table helps calculate equilibrium concentrations?",a:["Periodic table","ICE table","Multiplication table","Solubility table"],c:1,e:"ICE means Initial, Change, and Equilibrium."},
+{t:"Equilibrium",q:"When can Kp = Kc?",a:["When Δn = 0","When temperature is zero","Always","When pressure is zero"],c:0,e:"Kp = Kc(RT)^Δn. If Δn = 0, then Kp = Kc."}
+];
+
+const fish=["🐟 Tilapia","🐠 Goldfish","🐡 Pufferfish","🐬 Blue Marlin","🦈 Great Shark","🐉 Dragonfish"];
+let coins=0,score=0,caught=[],remaining=60,interval=null,current=null,locked=false;
+
+function hideAll(){
+["menu","game","collection","reviewer"].forEach(id=>document.getElementById(id).classList.add("hidden"));
+}
+function showMenu(){
+clearInterval(interval);hideAll();document.getElementById("menu").classList.remove("hidden");
+document.getElementById("sceneText").textContent="Welcome to the lake!";
+}
+function startGame(){
+hideAll();document.getElementById("game").classList.remove("hidden");
+document.getElementById("feedback").textContent="Cast your line to begin!";
+document.getElementById("cast").disabled=false;
+updateStats();castFish();
+}
+function updateStats(){
+document.getElementById("coins").textContent=coins;
+document.getElementById("score").textContent=score;
+}
+function castFish(){
+clearInterval(interval);locked=false;
+document.getElementById("cast").disabled=true;
+current=questions[Math.floor(Math.random()*questions.length)];
+let f=fish[Math.floor(Math.random()*fish.length)];
+document.getElementById("fishName").textContent=f+" is biting!";
+document.getElementById("sceneText").textContent="A fish is on your line!";
+document.getElementById("topic").textContent="🧪 Topic: "+current.t;
+document.getElementById("question").textContent=current.q;
+document.getElementById("feedback").textContent="Choose your answer. You only get ONE attempt!";
+let area=document.getElementById("answers");area.innerHTML="";
+current.a.forEach((answer,i)=>{
+let b=document.createElement("button");b.textContent=answer;
+b.onclick=()=>answerFish(i);area.appendChild(b);
+});
+remaining=60;updateTimer();
+interval=setInterval(()=>{
+remaining--;updateTimer();
+if(remaining<=0)finish(false,"⏰ Time's up! The fish escaped.");
+},1000);
+}
+function updateTimer(){
+document.getElementById("timer").textContent=remaining+" seconds";
+document.getElementById("bar").style.width=(remaining/60*100)+"%";
+document.getElementById("bar").style.background=remaining<=10?"#dc3545":remaining<=30?"#e89b28":"#21a66a";
+}
+function answerFish(i){
+if(locked)return;
+locked=true;clearInterval(interval);
+document.querySelectorAll("#answers button").forEach(b=>b.disabled=true);
+if(i===current.c){
+coins+=10;score+=1;
+let name=fish[Math.floor(Math.random()*fish.length)];
+caught.push(name);
+finish(true,"🎉 Correct! You caught a fish! +10 coins. "+current.e);
+}else{
+finish(false,"❌ Incorrect! The fish escaped. Correct answer: "+current.a[current.c]+". "+current.e);
+}
+updateStats();
+}
+function finish(win,message){
+clearInterval(interval);locked=true;
+document.getElementById("feedback").textContent=message;
+document.getElementById("cast").disabled=false;
+document.getElementById("cast").textContent="CAST AGAIN 🎣";
+document.getElementById("sceneText").textContent=win?"Great catch!":"Try another fish!";
+}
+function showCollection(){
+hideAll();document.getElementById("collection").classList.remove("hidden");
+document.getElementById("fishList").textContent=caught.length?caught.join(" • "):"No fish caught yet. Start fishing!";
+}
+function showReviewer(){
+hideAll();document.getElementById("reviewer").classList.remove("hidden");
+}
+showMenu();
+</script>
+</body>
+  </html>
+
