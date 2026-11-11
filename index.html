@@ -65,7 +65,8 @@ footer{padding:20px;color:#c7dce6;font-size:13px}
   <p id="question"></p>
   <div id="answers" class="answers"></div>
   <p id="feedback"></p>
-  <button id="cast" onclick="castFish()">CAST AGAIN 🎣</button>
+  <button id="cast" onclick="castFish()">CAST LINE 🎣</button>
+<button id="reel" class="hidden" onclick="reelIn()">REEL IN! 🪝</button>
   <button onclick="showMenu()">MAIN MENU</button>
 </section>
 
@@ -107,7 +108,9 @@ const questions = [
 ];
 
 const fish=["🐟 Tilapia","🐠 Goldfish","🐡 Pufferfish","🐬 Blue Marlin","🦈 Great Shark","🐉 Dragonfish"];
-let coins=0,score=0,caught=[],remaining=60,interval=null,current=null,locked=false;
+let coins=0,score=0,caught=[],remaining=60;
+let interval=null,current=null,locked=false;
+let biteTimeout=null,phase="idle";
 
 function hideAll(){
 ["menu","game","collection","reviewer"].forEach(id=>document.getElementById(id).classList.add("hidden"));
@@ -125,28 +128,79 @@ updateStats();castFish();
 function updateStats(){
 document.getElementById("coins").textContent=coins;
 document.getElementById("score").textContent=score;
-}
-function castFish(){
-clearInterval(interval);locked=false;
-document.getElementById("cast").disabled=true;
-current=questions[Math.floor(Math.random()*questions.length)];
-let f=fish[Math.floor(Math.random()*fish.length)];
-document.getElementById("fishName").textContent=f+" is biting!";
-document.getElementById("sceneText").textContent="A fish is on your line!";
-document.getElementById("topic").textContent="🧪 Topic: "+current.t;
-document.getElementById("question").textContent=current.q;
-document.getElementById("feedback").textContent="Choose your answer. You only get ONE attempt!";
-let area=document.getElementById("answers");area.innerHTML="";
-current.a.forEach((answer,i)=>{
-let b=document.createElement("button");b.textContent=answer;
-b.onclick=()=>answerFish(i);area.appendChild(b);
-});
-remaining=60;updateTimer();
-interval=setInterval(()=>{
-remaining--;updateTimer();
-if(remaining<=0)finish(false,"⏰ Time's up! The fish escaped.");
-},1000);
-}
+}function castFish(){
+  clearInterval(interval);
+  clearTimeout(biteTimeout);
+
+  locked=true;
+  phase="waiting";
+
+  document.getElementById("cast").disabled=true;
+  document.getElementById("cast").textContent="CASTING...";
+  document.getElementById("reel").classList.add("hidden");
+
+  document.getElementById("fishName").textContent="Waiting for a bite...";
+  document.getElementById("topic").textContent="🎣 Fishing in progress";
+  document.getElementById("question").textContent="Watch the water carefully!";
+  document.getElementById("answers").innerHTML="";
+  document.getElementById("feedback").textContent="A fish could bite at any moment!";
+  document.getElementById("timer").textContent="WAIT";
+  document.getElementById("bar").style.width="100%";
+  document.getElementById("sceneText").textContent="Your fishing line is in the water!";
+
+  let wait=2000+Math.floor(Math.random()*3000);
+
+  biteTimeout=setTimeout(()=>{
+    phase="bite";
+
+    document.getElementById("fishName").textContent="🐟 A FISH IS BITING!";
+    document.getElementById("sceneText").textContent="QUICK! REEL IT IN!";
+    document.getElementById("feedback").textContent="Tap REEL IN before the fish escapes!";
+    document.getElementById("reel").classList.remove("hidden");
+
+    biteTimeout=setTimeout(()=>{
+      finish(false,"The fish escaped! You were too slow to reel it in.");
+    },4000);
+
+  },wait);
+}function reelIn(){
+  if(phase!=="bite")return;
+
+  clearTimeout(biteTimeout);
+  phase="question";
+  locked=false;
+
+  current=questions[Math.floor(Math.random()*questions.length)];
+
+  document.getElementById("reel").classList.add("hidden");
+  document.getElementById("fishName").textContent="🐠 Fish hooked! Solve the challenge!";
+  document.getElementById("sceneText").textContent="The fish is on your line!";
+  document.getElementById("topic").textContent="🧪 Topic: "+current.t;
+  document.getElementById("question").textContent=current.q;
+  document.getElementById("feedback").textContent="You have ONE attempt. Good luck!";
+
+  let area=document.getElementById("answers");
+  area.innerHTML="";
+
+  current.a.forEach((answer,i)=>{
+    let b=document.createElement("button");
+    b.textContent=answer;
+    b.onclick=()=>answerFish(i);
+    area.appendChild(b);
+  });
+
+  remaining=60;
+  updateTimer();
+
+  interval=setInterval(()=>{
+    remaining--;
+    updateTimer();
+
+    if(remaining<=0){
+      finish(false,"⏰ Time's up! The fish escaped.");
+    }
+  },1000);
+                                 }
 function updateTimer(){
 document.getElementById("timer").textContent=remaining+" seconds";
 document.getElementById("bar").style.width=(remaining/60*100)+"%";
@@ -165,13 +219,20 @@ finish(true,"🎉 Correct! You caught a fish! +10 coins. "+current.e);
 finish(false,"❌ Incorrect! The fish escaped. Correct answer: "+current.a[current.c]+". "+current.e);
 }
 updateStats();
-}
-function finish(win,message){
-clearInterval(interval);locked=true;
-document.getElementById("feedback").textContent=message;
-document.getElementById("cast").disabled=false;
-document.getElementById("cast").textContent="CAST AGAIN 🎣";
-document.getElementById("sceneText").textContent=win?"Great catch!":"Try another fish!";
+}function finish(win,message){
+  clearInterval(interval);
+  clearTimeout(biteTimeout);
+
+  locked=true;
+  phase="done";
+
+  document.getElementById("reel").classList.add("hidden");
+  document.getElementById("feedback").textContent=message;
+  document.getElementById("cast").disabled=false;
+  document.getElementById("cast").textContent="CAST AGAIN 🎣";
+
+  document.getElementById("sceneText").textContent=
+    win?"Great catch!":"The fish got away!";
 }
 function showCollection(){
 hideAll();document.getElementById("collection").classList.remove("hidden");
