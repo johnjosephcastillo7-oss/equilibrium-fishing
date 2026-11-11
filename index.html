@@ -5,7 +5,66 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Equilibrium Fishing</title>
-<style>
+
+/* Animated swimming fish */
+.swimmer {
+  display: inline-block;
+  position: absolute;
+  font-size: 34px;
+  animation: fishSwim 3s ease-in-out infinite alternate;
+}
+
+.swimmer.one {
+  left: 8%;
+  top: 65%;
+  animation-duration: 3s;
+}
+
+.swimmer.two {
+  left: 65%;
+  top: 72%;
+  font-size: 27px;
+  animation-duration: 4s;
+  animation-delay: .5s;
+}
+
+.swimmer.three {
+  left: 38%;
+  top: 82%;
+  font-size: 40px;
+  animation-duration: 3.5s;
+  animation-delay: 1s;
+}
+
+@keyframes fishSwim {
+  0% { transform: translateX(-15px) rotate(-8deg); }
+  50% { transform: translateX(12px) rotate(8deg); }
+  100% { transform: translateX(25px) rotate(-5deg); }
+}
+
+@keyframes fishWiggle {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(9deg); }
+}
+
+.fish-caught {
+  display: inline-block;
+  font-size: 65px;
+  animation: fishWiggle .5s ease-in-out infinite;
+}
+
+.answer-explanation {
+  text-align: left;
+  line-height: 1.65;
+  background: #e4f5e9;
+  color: #173b2a;
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 12px;
+  white-space: pre-line;
+}
+  
+  <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#102d46;color:white;text-align:center}
 button{border:0;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:bold;cursor:pointer;background:#ffca58;color:#17324b;margin:5px}
@@ -42,7 +101,11 @@ footer{padding:20px;color:#c7dce6;font-size:13px}
   <div class="sun">☀️</div>
   <div class="cloud">☁️ 🐦 ☁️</div>
   <div class="fisher">🧑‍🎣</div>
-  <div class="water">〰️ 🐟 〰️</div>
+  <div class="water">
+  <span class="swimmer one">🐟</span>
+  <span class="swimmer two">🐠</span>
+  <span class="swimmer three">🐡</span>
+  </div>
   <h2 id="sceneText">Welcome to the lake!</h2>
 </section>
 
@@ -107,7 +170,25 @@ const questions = [
 {t:"Equilibrium",q:"When can Kp = Kc?",a:["When Δn = 0","When temperature is zero","Always","When pressure is zero"],c:0,e:"Kp = Kc(RT)^Δn. If Δn = 0, then Kp = Kc."}
 ];
 
-const fish=["🐟 Tilapia","🐠 Goldfish","🐡 Pufferfish","🐬 Blue Marlin","🦈 Great Shark","🐉 Dragonfish"];
+
+const fish = [
+  {name:"Tilapia",emoji:"🐟",rarity:"Common"},
+  {name:"Goldfish",emoji:"🐠",rarity:"Common"},
+  {name:"Catfish",emoji:"🐟",rarity:"Common"},
+  {name:"Carp",emoji:"🐟",rarity:"Common"},
+  {name:"Pufferfish",emoji:"🐡",rarity:"Uncommon"},
+  {name:"Clownfish",emoji:"🐠",rarity:"Uncommon"},
+  {name:"Koi",emoji:"🐟",rarity:"Uncommon"},
+  {name:"Swordfish",emoji:"🐟",rarity:"Rare"},
+  {name:"Tuna",emoji:"🐟",rarity:"Rare"},
+  {name:"Lionfish",emoji:"🐠",rarity:"Rare"},
+  {name:"Manta Ray",emoji:"🪼",rarity:"Epic"},
+  {name:"Arowana",emoji:"🐉",rarity:"Epic"},
+  {name:"Leviathan",emoji:"🐲",rarity:"Legendary"},
+  {name:"Golden Chemist Koi",emoji:"🐠",rarity:"Legendary"},
+  {name:"Abyssal Emperor",emoji:"🐉",rarity:"Legendary"}
+];
+  
 let coins=0,score=0,caught=[],remaining=60;
 let interval=null,current=null,locked=false;
 let biteTimeout=null,phase="idle";
@@ -153,7 +234,11 @@ document.getElementById("score").textContent=score;
   biteTimeout=setTimeout(()=>{
     phase="bite";
 
-    document.getElementById("fishName").textContent="🐟 A FISH IS BITING!";
+    activeFish = fish[Math.floor(Math.random()*fish.length)];
+
+document.getElementById("fishName").textContent =
+  activeFish.emoji + " " + activeFish.name +
+  " (" + activeFish.rarity + ") is biting!";
     document.getElementById("sceneText").textContent="QUICK! REEL IT IN!";
     document.getElementById("feedback").textContent="Tap REEL IN before the fish escapes!";
     document.getElementById("reel").classList.remove("hidden");
@@ -212,14 +297,45 @@ locked=true;clearInterval(interval);
 document.querySelectorAll("#answers button").forEach(b=>b.disabled=true);
 if(i===current.c){
 coins+=10;score+=1;
-let name=fish[Math.floor(Math.random()*fish.length)];
-caught.push(name);
+caught.push(activeFish.name);
 finish(true,"🎉 Correct! You caught a fish! +10 coins. "+current.e);
 }else{
 finish(false,"❌ Incorrect! The fish escaped. Correct answer: "+current.a[current.c]+". "+current.e);
 }
 updateStats();
-}function finish(win,message){
+
+function finish(win,message){
+  clearInterval(interval);
+  clearTimeout(biteTimeout);
+
+  locked=true;
+  phase="done";
+
+  document.getElementById("reel").classList.add("hidden");
+
+  let explanation =
+    "CORRECT ANSWER: " + current.a[current.c] +
+    "\n\nFORMULA / CONCEPT:\n" +
+    (current.formula || "Review the chemistry concept used in this question.") +
+    "\n\nSTEP-BY-STEP EXPLANATION:\n" +
+    (current.steps || current.e);
+
+  document.getElementById("feedback").innerHTML =
+    "<div class='answer-explanation'>" +
+    "<b>" + (win ? "🎉 Excellent catch!" : "🐟 The fish escaped!") +
+    "</b><br><br>" +
+    message +
+    "<br><br><b>📘 LEARNING EXPLANATION</b><br>" +
+    explanation.replace(/\n/g,"<br>") +
+    "</div>";
+
+  document.getElementById("cast").disabled=false;
+  document.getElementById("cast").textContent="CAST AGAIN 🎣";
+
+  document.getElementById("sceneText").textContent =
+    win ? "Great catch!" : "The fish got away!";
+}
+  
   clearInterval(interval);
   clearTimeout(biteTimeout);
 
